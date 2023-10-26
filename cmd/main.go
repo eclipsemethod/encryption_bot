@@ -1,8 +1,8 @@
 package main
 
 import (
-	"enc_bot2/internal/encryption"
-	"fmt"
+	"encryption_bot/internal/config"
+	"encryption_bot/internal/encryption"
 	"log"
 	"strconv"
 	"strings"
@@ -10,19 +10,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-const InvalidFormat = "Введен неверный формат"
-const InvalidDataFormat = "Пожалуйста введите данные в фомате: [command] [key] [text]"
-
 func main() {
-	var telegramBotToken string
-	fmt.Println("Введите токен бота")
-	_, err := fmt.Scanln(&telegramBotToken)
+	config, err := config.LoadConfiguration("data.json")
 	if err != nil {
-		log.Fatalln("Не удалось считать токен")
+		log.Panicln("Не удалось получить данные json")
 	}
 
 	// используя токен создаем новый инстанс бота
-	bot, err := tgbotapi.NewBotAPI(telegramBotToken)
+	bot, err := tgbotapi.NewBotAPI(config.TgBotToken)
 	if err != nil {
 		log.Panic("не удалось запустить бота", err)
 	}
@@ -47,6 +42,15 @@ func main() {
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
 		// преобразуем комманду пользователя (Находим ключ и текст для шифрации)
+		switch update.Message.Command() {
+		case "help":
+			_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, config.Messagess.Help))
+			if err != nil {
+				log.Println("Не удалось отправить сообщение с помощью")
+				continue
+			}
+		}
+
 		text := update.Message.Text
 		task := strings.Split(text, " ")
 		if strings.Count(text, " ") < 2 {
@@ -57,7 +61,7 @@ func main() {
 		// Преобразуем подстроку ключа в байтовый формат
 		rot, err := strconv.Atoi(task[1])
 		if err != nil {
-			_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, InvalidDataFormat))
+			_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, config.Messagess.InvalidDataFormat))
 			if err != nil {
 				log.Println("Не удалось отправить сообщение о неверном формате пользователю")
 				continue
@@ -77,7 +81,7 @@ func main() {
 		switch update.Message.Command() {
 		case "decrypt":
 			if strings.Count(text, " ") < 2 {
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, InvalidFormat))
+				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, config.Messagess.InvalidFormat))
 				if err != nil {
 					log.Println("Не удалось отправить сообщение")
 					continue
@@ -96,7 +100,7 @@ func main() {
 			}
 		case "encrypt":
 			if strings.Count(text, " ") < 2 {
-				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, InvalidFormat))
+				_, err := bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, config.Messagess.InvalidDataFormat))
 				if err != nil {
 					log.Println("Не удалось отправить зашифрованный текст пользователю")
 					continue
@@ -107,7 +111,7 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 
 			// Отправляем зашифрованный текст пользователю.
-			_, err := bot.Send(msg)
+			_, err = bot.Send(msg)
 			if err != nil {
 				log.Println("Не удалось отправить зашифрованный текст пользователю")
 			}

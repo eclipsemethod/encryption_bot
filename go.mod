@@ -1,4 +1,4 @@
-module enc_bot2
+module encryption_bot
 
 go 1.21.1
 
