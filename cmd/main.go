@@ -1,11 +1,12 @@
 package main
 
 import (
-	"encryption_bot/internal/config"
-	"encryption_bot/internal/encryption"
 	"log"
 	"strconv"
 	"strings"
+
+	"encryption_bot/internal/config"
+	"encryption_bot/internal/encryption"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -13,13 +14,13 @@ import (
 func main() {
 	config, err := config.LoadConfiguration("data.json")
 	if err != nil {
-		log.Panicln("Не удалось получить данные json")
+		log.Panicln("Не удалось прочитать файл конфигурации")
 	}
 
 	// используя токен создаем новый инстанс бота
 	bot, err := tgbotapi.NewBotAPI(config.TgBotToken)
 	if err != nil {
-		log.Panic("не удалось запустить бота", err)
+		log.Panic("Не удалось запустить бота", err)
 	}
 
 	log.Printf("Авторизация аккаунта: %s", bot.Self.UserName)
